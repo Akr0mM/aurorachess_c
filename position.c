@@ -1,9 +1,11 @@
 #include "position.h"
 #include "aurora.h"
 
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
-void make_move(Aurora *aurora, Move move) {
+void aurora_make_move(Aurora *aurora, Move move) {
   // REMOVE THE &BITBOARD FROM THE BOARD_BITBOARD
   aurora->board_bitboard[__builtin_ctzll(*move.piece & move.move)] = NULL;
 
@@ -16,6 +18,10 @@ void make_move(Aurora *aurora, Move move) {
 
     // ADD CREATED PIECE
     *move.promotion_piece |= move.promotion;
+  }
+
+  if (move.castle) {
+    *move.rook ^= move.castle;
   }
 
   if (move.en_passant_piece_captured) {
@@ -48,7 +54,73 @@ void make_move(Aurora *aurora, Move move) {
   aurora->turn = !aurora->turn;
 }
 
-void undo_move(Aurora *aurora) {}
+void aurora_undo_move(Aurora *aurora) { (void)aurora; }
+
+Move get_move_from_sq(Move moves[100], char sq[4]) {
+  uint64_t mask = convert_sq_to_mask(sq);
+  for (int i = 0; i < 100; i++) {
+    if (moves[i].move == mask)
+      return moves[i];
+  }
+
+  printf("BAD BAD BAD BAD BAD BAD BAD BAD BAD BAD POSITION MOVE NOT FOUND "
+         "!!!!!!!!\n");
+  return (Move){};
+}
+
+uint64_t convert_sq_to_mask(char sq[4]) {
+  int i1 = (sq[0] - 'a') + (sq[1] - '1') * 8;
+  int i2 = (sq[2] - 'a') + (sq[3] - '1') * 8;
+
+  return (1ULL << i1) | (1ULL << i2);
+}
+
+uint64_t file_mask(int i) {
+  int r = i % 8;
+  switch (r) {
+  case 0:
+    return FILE_A;
+  case 1:
+    return FILE_B;
+  case 2:
+    return FILE_C;
+  case 3:
+    return FILE_D;
+  case 4:
+    return FILE_E;
+  case 5:
+    return FILE_F;
+  case 6:
+    return FILE_G;
+  case 7:
+    return FILE_H;
+  default:
+    return 0ULL;
+  }
+}
+uint64_t rank_mask(int i) {
+  int q = (i - (i % 8)) / 8;
+  switch (q) {
+  case 0:
+    return RANK_1;
+  case 1:
+    return RANK_2;
+  case 2:
+    return RANK_3;
+  case 3:
+    return RANK_4;
+  case 4:
+    return RANK_5;
+  case 5:
+    return RANK_6;
+  case 6:
+    return RANK_7;
+  case 7:
+    return RANK_8;
+  default:
+    return 0ULL;
+  }
+}
 
 uint64_t *get_piece_captured(Aurora *aurora, uint64_t mask) {
   return aurora->board_bitboard[__builtin_ctzll(mask)];
@@ -72,6 +144,22 @@ void aurora_load_fen(Aurora *aurora, char *fen) {
   aurora->turn = strcmp(tokens[1], "w") == 0 ? 1 : 0;
 
   // castlings
+  for (size_t i = 0; i < strlen(tokens[2]); i++) {
+    switch (tokens[2][i]) {
+    case 'K':
+      aurora->castling_right[0] = 1;
+      break;
+    case 'Q':
+      aurora->castling_right[1] = 1;
+      break;
+    case 'k':
+      aurora->castling_right[2] = 1;
+      break;
+    case 'q':
+      aurora->castling_right[3] = 1;
+      break;
+    }
+  }
 
   // en passant
   aurora->en_passant =
@@ -99,74 +187,50 @@ void aurora_load_fen(Aurora *aurora, char *fen) {
 
     switch (c) {
     case 'P':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_pawns |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_pawns;
       break;
     case 'N':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_knights |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_knights;
       break;
     case 'B':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_bishops |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_bishops;
       break;
     case 'R':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_rooks |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_rooks;
       break;
     case 'Q':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_queens |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_queens;
       break;
     case 'K':
-      aurora->all_pieces |= pos;
-      aurora->all_white_pieces |= pos;
       aurora->white_king |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_king;
       break;
     case 'p':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_pawns |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_pawns;
       break;
     case 'n':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_knights |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_knights;
       break;
     case 'b':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_bishops |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_bishops;
       break;
     case 'r':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_rooks |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_rooks;
       break;
     case 'q':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_queens |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_queens;
       break;
     case 'k':
-      aurora->all_pieces |= pos;
-      aurora->all_black_pieces |= pos;
       aurora->black_king |= pos;
       aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_king;
       break;

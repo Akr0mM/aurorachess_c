@@ -4,8 +4,7 @@
 #include "position.h"
 
 int main(void) {
-  char *fen =
-      "5p1p/2r3P1/1b6/2Ppp3/npKpnRr1/1NQPN1R1/PP3PPP/q1BpBbk1 w HAha - 0 1";
+  char *fen = "r4rk1/p1Q2pp1/1p1p3p/8/4qPP1/P3B3/1PP5/2KR3R b - - 0 18";
   // char *fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
   Aurora aurora;
@@ -13,9 +12,9 @@ int main(void) {
 
   Move all_moves[100];
   int nb_moves = aurora_get_moves(&aurora, all_moves);
-  // draw_all_moves(all_moves, nb_moves);
-
-  make_move(&aurora, all_moves[14]);
+  draw_all_moves(all_moves, nb_moves);
+  aurora_make_move(&aurora, get_move_from_sq(all_moves, "e4e3"));
+  draw_board_bitboard(aurora.all_black_pieces);
 
   return 0;
 }

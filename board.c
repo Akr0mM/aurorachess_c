@@ -5,13 +5,15 @@
 #include <stdio.h>
 
 void draw_all_moves(Move moves[100], int nb_moves) {
-  printf("Total number of moves found : %d\n", nb_moves);
-
+  int nb_captures = 0;
   for (int i = 0; i < nb_moves; i++) {
-    draw_board_bitboard(moves[nb_moves].move);
+    draw_board_bitboard(moves[i].move);
+    if (moves[i].capture)
+      nb_captures++;
   }
 
   printf("Total number of moves found : %d\n", nb_moves);
+  printf("Total number of captures found : %d\n", nb_captures);
 }
 
 void draw_board_bitboard(uint64_t bitboard) {
