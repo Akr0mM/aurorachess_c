@@ -1,0 +1,8 @@
+- makefile pour les tests
+
+- finish legals moves = unsafe for white ; black
+- faire des fonction pour chaque mogen de piece et faire knights bishop rooks queen et king en general
+
+
+- peut etre tout changer struct Move en faisant des move par square et contenir les bitboards dans un array comme ca pas besoin de donner une adresse mais juste un indice
+- faire un enum  pour les 64 cases (voir CPW square notation)

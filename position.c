@@ -1,5 +1,6 @@
 #include "position.h"
 #include "aurora.h"
+#include "board.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -38,6 +39,8 @@ void aurora_make_move(Aurora *aurora, Move move) {
        move.piece == &aurora->black_pawns) &&
       move.move >> __builtin_ctzll(move.move) == DOUBLE_FORWARD_PAWN_SPAN) {
     aurora->en_passant = 1ULL << (__builtin_ctzll(move.move) + 8);
+  } else {
+    aurora->en_passant = 0ULL;
   }
 
   // ADDING THE &BITBOARD TO THE NEW SQUARE WHERE THE PIECE LANDS
@@ -50,17 +53,29 @@ void aurora_make_move(Aurora *aurora, Move move) {
   }
 
   // PASSING TO NEXT BOARD
-  aurora->en_passant = 0ULL;
   aurora->turn = !aurora->turn;
 }
 
 void aurora_undo_move(Aurora *aurora) { (void)aurora; }
 
-Move get_move_from_sq(Move moves[100], char sq[4]) {
+Move get_move_from_sq(Move moves[100], char sq[5]) {
   uint64_t mask = convert_sq_to_mask(sq);
+
   for (int i = 0; i < 100; i++) {
-    if (moves[i].move == mask)
-      return moves[i];
+    if (moves[i].move == mask) {
+      switch (sq[4]) {
+      case '\0':
+        return moves[i];
+      case 'n':
+        return moves[i];
+      case 'b':
+        return moves[i + 1];
+      case 'r':
+        return moves[i + 2];
+      case 'q':
+        return moves[i + 3];
+      }
+    }
   }
 
   printf("BAD BAD BAD BAD BAD BAD BAD BAD BAD BAD POSITION MOVE NOT FOUND "

@@ -6,7 +6,7 @@
 // FUNCTION
 void aurora_load_fen(Aurora *aurora, char *fen);
 u_int64_t convert_sq_to_mask(char sq[4]);
-Move get_move_from_sq(Move moves[100], char sq[4]);
+Move get_move_from_sq(Move moves[100], char sq[5]);
 void aurora_make_move(Aurora *aurora, Move move);
 void aurora_undo_move(Aurora *aurora);
 uint64_t *get_piece_captured(Aurora *aurora, uint64_t mask);
