@@ -58,6 +58,20 @@ void aurora_make_move(Aurora *aurora, Move move) {
 
 void aurora_undo_move(Aurora *aurora) { (void)aurora; }
 
+void aurora_analyse(Aurora *aurora) {
+  aurora->all_white_pieces = aurora->white_pawns | aurora->white_knights |
+                             aurora->white_bishops | aurora->white_rooks |
+                             aurora->white_queens | aurora->white_king;
+
+  aurora->all_black_pieces = aurora->black_pawns | aurora->black_knights |
+                             aurora->black_bishops | aurora->black_rooks |
+                             aurora->black_queens | aurora->black_king;
+
+  aurora->all_pieces = aurora->all_white_pieces | aurora->all_black_pieces;
+
+  aurora->empty = ~aurora->all_pieces;  
+}
+
 Move get_move_from_sq(Move moves[100], char sq[5]) {
   uint64_t mask = convert_sq_to_mask(sq);
 

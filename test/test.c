@@ -27,7 +27,7 @@ int main(void) {
     // draw_board_bitboard(aurora.all_pieces);
   }
 
-  aurora_get_moves(&aurora, all_moves);
+  aurora_analyse(&aurora);
   // draw_board_bitboard(aurora.white_pawns);
   // draw_board_bitboard(aurora.white_knights);
   // draw_board_bitboard(aurora.white_bishops);

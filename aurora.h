@@ -21,6 +21,7 @@ typedef struct Aurora {
   uint64_t en_passant;
 
   uint64_t all_pieces;
+  uint64_t empty;
   uint64_t all_white_pieces;
   uint64_t all_black_pieces;
 

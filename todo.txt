@@ -1,8 +1,16 @@
-- makefile pour les tests
+-* finir legals moves :
+	- unsafe_for_side()
+	- ne pas pouvoir castle quand les cases entre sont attaque donc uilise unsafe_for_side()
+	- enlever les castlings rights sur les coups de roi et tours et quand les tours sont mange
+	- faire un get_pinned_piece() qui return un bb des pieces qu'on peut pas bouger car pinned
+	- DONC => handle movement du roi + pieces clouee + echec simple + double echec + prise en passant
 
-- finish legals moves = unsafe for white ; black
-- faire des fonction pour chaque mogen de piece et faire knights bishop rooks queen et king en general
+- peut etre tout changer struct Move en faisant des move par square et contenir les bitboards dans un array comme ca pas besoin de donner une adresse mais juste un indice et faire un enum pour les indices des bitboards dans l'array
+- faire un enum pour les 64 cases (voir CPW square notation)
 
+optimisation temps:
+	- avoir un array[64] de bitboards qui sont les attaques des cavaliers pour chaque case et pour les roi
+	donc compute les coups a lavance
 
-- peut etre tout changer struct Move en faisant des move par square et contenir les bitboards dans un array comme ca pas besoin de donner une adresse mais juste un indice
-- faire un enum  pour les 64 cases (voir CPW square notation)
+optimisation memoire:
+	- all_moves len 100 
