@@ -271,3 +271,7 @@ void aurora_load_fen(Aurora *aurora, char *fen) {
     }
   }
 }
+
+uint64_t square_to_bitboard(char square[2]) {
+  return 1ULL <<  ((square[1] - '1') * 8 + square[0] - 'a');
+}

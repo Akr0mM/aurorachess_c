@@ -4,6 +4,26 @@
 
 #include <stdint.h>
 
+int aurora_get_moves(Aurora *aurora, Move moves[100]) {
+  int nb_moves = 0;
+
+  aurora_analyse(aurora);
+
+  if (aurora->turn) {
+    uint64_t not_white_pieces = ~(aurora->all_white_pieces | aurora->black_king);
+    uint64_t black_pieces = aurora->all_black_pieces ^ aurora->black_king;
+
+    nb_moves = aurora_get_white_moves(aurora, moves, not_white_pieces, black_pieces);
+  } else {
+    uint64_t not_black_pieces = ~(aurora->all_black_pieces | aurora->white_king);
+    uint64_t white_pieces = aurora->all_white_pieces ^ aurora->white_king;
+
+    nb_moves = aurora_get_black_moves(aurora, moves, not_black_pieces, white_pieces);
+  }
+
+  return nb_moves;
+}
+
 int aurora_get_white_moves(Aurora *aurora, Move moves[100], uint64_t not_white_pieces, uint64_t black_pieces) {
   int nb_moves = 0;
 
@@ -41,26 +61,6 @@ int aurora_get_black_moves(Aurora *aurora, Move moves[100],
   get_knights_moves(moves, &nb_moves, &aurora->black_knights, not_black_pieces, white_pieces); 
 
   get_black_pawns_moves(aurora, moves, &nb_moves, white_pieces);
-
-  return nb_moves;
-}
-
-int aurora_get_moves(Aurora *aurora, Move moves[100]) {
-  int nb_moves = 0;
-
-  aurora_analyse(aurora);
-
-  if (aurora->turn) {
-    uint64_t not_white_pieces = ~(aurora->all_white_pieces | aurora->black_king);
-    uint64_t black_pieces = aurora->all_black_pieces ^ aurora->black_king;
-
-    nb_moves = aurora_get_white_moves(aurora, moves, not_white_pieces, black_pieces);
-  } else {
-    uint64_t not_black_pieces = ~(aurora->all_black_pieces | aurora->white_king);
-    uint64_t white_pieces = aurora->all_white_pieces ^ aurora->white_king;
-
-    nb_moves = aurora_get_black_moves(aurora, moves, not_black_pieces, white_pieces);
-  }
 
   return nb_moves;
 }

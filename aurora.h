@@ -76,7 +76,6 @@ static const uint64_t DOUBLE_FORWARD_PAWN_SPAN = 0x10001ULL;
 
 // FUNCTIONS
 void aurora_init(Aurora *aurora, char *fen);
-uint64_t square_to_bitboard(char square[2]);
 
 static const uint64_t diag_slash[15] = {
     0x0000000000000001ULL, /* sum=0  : a1 */
