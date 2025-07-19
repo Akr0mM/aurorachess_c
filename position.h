@@ -16,7 +16,7 @@ void aurora_undo_move(Aurora *aurora);
 
 void aurora_analyse(Aurora *aurora);
 
-uint64_t *get_piece_captured(Aurora *aurora, uint64_t mask);
+Piece get_piece_captured(Aurora *aurora, uint64_t mask);
 
 uint64_t file_mask(int i);
 

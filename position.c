@@ -7,36 +7,35 @@
 #include <string.h>
 
 void aurora_make_move(Aurora *aurora, Move move) {
-  // REMOVE THE &BITBOARD FROM THE BOARD_BITBOARD
-  aurora->board_bitboard[__builtin_ctzll(*move.piece & move.move)] = NULL;
+  // REMOVE THE PIECE FROM THE BOARD_BITBOARD
+  aurora->board_bitboard[__builtin_ctzll(aurora->bitboards[move.piece] & move.move)] = NONE;
 
   // MAKING THE MOVE ON THE BITBOARD
-  *move.piece ^= move.move;
+  aurora->bitboards[move.piece] ^= move.move;
 
   if (move.promotion) {
     // REMOVE PAWN THAT PROMOTES
-    *move.piece ^= move.promotion;
+    aurora->bitboards[move.piece] ^= move.promotion;
 
     // ADD CREATED PIECE
-    *move.promotion_piece |= move.promotion;
+    aurora->bitboards[move.promotion_piece] |= move.promotion;
   }
 
   if (move.castle) {
-    *move.rook ^= move.castle;
+    aurora->bitboards[move.rook] ^= move.castle;
   }
 
-  if (move.en_passant_piece_captured) {
+  if (move.en_passant_piece_captured != NONE) {
     // REMOVE THE CAPTURE PAWN
-    *move.en_passant_piece_captured ^= move.capture;
+    aurora->bitboards[move.en_passant_piece_captured] ^= move.capture;
   } else if (move.capture) {
     // REMOVE THE CAPTURED PIECE
-    uint64_t *piece_captured = get_piece_captured(aurora, move.capture);
-    *piece_captured ^= move.capture;
+    Piece piece_captured = get_piece_captured(aurora, move.capture);
+    aurora->bitboards[piece_captured] ^= move.capture;
   }
 
   // ADDING ENPASSANT SQUARE IF IS A DOUBLE FORWARD PAWN MOVE
-  if ((move.piece == &aurora->white_pawns ||
-       move.piece == &aurora->black_pawns) &&
+  if ((move.piece == WP || move.piece == BP) &&
       move.move >> __builtin_ctzll(move.move) == DOUBLE_FORWARD_PAWN_SPAN) {
     aurora->en_passant = 1ULL << (__builtin_ctzll(move.move) + 8);
   } else {
@@ -48,7 +47,7 @@ void aurora_make_move(Aurora *aurora, Move move) {
     aurora->board_bitboard[__builtin_ctzll(move.promotion)] =
         move.promotion_piece;
   } else {
-    aurora->board_bitboard[__builtin_ctzll(*move.piece & move.move)] =
+    aurora->board_bitboard[__builtin_ctzll(aurora->bitboards[move.piece] & move.move)] =
         move.piece;
   }
 
@@ -59,17 +58,17 @@ void aurora_make_move(Aurora *aurora, Move move) {
 void aurora_undo_move(Aurora *aurora) { (void)aurora; }
 
 void aurora_analyse(Aurora *aurora) {
-  aurora->all_white_pieces = aurora->white_pawns | aurora->white_knights |
-                             aurora->white_bishops | aurora->white_rooks |
-                             aurora->white_queens | aurora->white_king;
+  aurora->bitboards[WHITE] = aurora->bitboards[WP] | aurora->bitboards[WN] |
+                             aurora->bitboards[WB] | aurora->bitboards[WR] |
+                             aurora->bitboards[WQ] | aurora->bitboards[WK];
 
-  aurora->all_black_pieces = aurora->black_pawns | aurora->black_knights |
-                             aurora->black_bishops | aurora->black_rooks |
-                             aurora->black_queens | aurora->black_king;
+  aurora->bitboards[BLACK] = aurora->bitboards[BP] | aurora->bitboards[BN] |
+                             aurora->bitboards[BB] | aurora->bitboards[BR] |
+                             aurora->bitboards[BQ] | aurora->bitboards[BK];
 
-  aurora->all_pieces = aurora->all_white_pieces | aurora->all_black_pieces;
+  aurora->bitboards[ALL] = aurora->bitboards[WHITE] | aurora->bitboards[BLACK];
 
-  aurora->empty = ~aurora->all_pieces;  
+  aurora->bitboards[EMPTY] = ~aurora->bitboards[ALL];  
 }
 
 Move get_move_from_sq(Move moves[100], char sq[5]) {
@@ -151,7 +150,7 @@ uint64_t rank_mask(int i) {
   }
 }
 
-uint64_t *get_piece_captured(Aurora *aurora, uint64_t mask) {
+Piece get_piece_captured(Aurora *aurora, uint64_t mask) {
   return aurora->board_bitboard[__builtin_ctzll(mask)];
 }
 
@@ -216,52 +215,52 @@ void aurora_load_fen(Aurora *aurora, char *fen) {
 
     switch (c) {
     case 'P':
-      aurora->white_pawns |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_pawns;
+      aurora->bitboards[WP] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WP;
       break;
     case 'N':
-      aurora->white_knights |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_knights;
+      aurora->bitboards[WN] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WN;
       break;
     case 'B':
-      aurora->white_bishops |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_bishops;
+      aurora->bitboards[WB] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WB;
       break;
     case 'R':
-      aurora->white_rooks |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_rooks;
+      aurora->bitboards[WR] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WR;
       break;
     case 'Q':
-      aurora->white_queens |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_queens;
+      aurora->bitboards[WQ] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WQ;
       break;
     case 'K':
-      aurora->white_king |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->white_king;
+      aurora->bitboards[WK] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = WK;
       break;
     case 'p':
-      aurora->black_pawns |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_pawns;
+      aurora->bitboards[BP] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BP;
       break;
     case 'n':
-      aurora->black_knights |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_knights;
+      aurora->bitboards[BN] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BN;
       break;
     case 'b':
-      aurora->black_bishops |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_bishops;
+      aurora->bitboards[BB] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BB;
       break;
     case 'r':
-      aurora->black_rooks |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_rooks;
+      aurora->bitboards[BR] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BR;
       break;
     case 'q':
-      aurora->black_queens |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_queens;
+      aurora->bitboards[BQ] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BQ;
       break;
     case 'k':
-      aurora->black_king |= pos;
-      aurora->board_bitboard[__builtin_ctzll(pos)] = &aurora->black_king;
+      aurora->bitboards[BK] |= pos;
+      aurora->board_bitboard[__builtin_ctzll(pos)] = BK;
       break;
     }
 

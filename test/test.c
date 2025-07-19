@@ -31,26 +31,27 @@ int bitboard_correspondence(Aurora *aurora) {
   for (int i = 0; i < 62; i++) {
     aurora_get_moves(aurora, all_moves);
     aurora_make_move(aurora, get_move_from_sq(all_moves, list_of_moves[i]));
+    draw_board_bitboard(aurora->bitboards[ALL]);
   }
 
   aurora_analyse(aurora);
 
   if (
-     	aurora->white_pawns == 0x10600ULL &&
-     	aurora->white_knights == 0ULL &&
-     	aurora->white_bishops == 0ULL &&
-     	aurora->white_rooks == 0ULL &&
-     	aurora->white_queens == 0ULL &&
-     	aurora->white_king == 0x2000ULL &&
-     	aurora->black_pawns == 0x1020000000000ULL &&
-     	aurora->black_knights == 0ULL &&
-     	aurora->black_bishops == 0ULL &&
-     	aurora->black_rooks == 0x100000000000000ULL &&
-     	aurora->black_queens == 0x80ULL &&
-     	aurora->black_king == 0x800000000000ULL &&
-     	aurora->all_white_pieces == 0x12600ULL &&
-     	aurora->all_black_pieces == 0x101820000000080ULL && 
-     	aurora->all_pieces == 0x101820000012680ULL 
+     	aurora->bitboards[WP] == 0x10600ULL &&
+     	aurora->bitboards[WN] == 0ULL &&
+     	aurora->bitboards[WB] == 0ULL &&
+     	aurora->bitboards[WR] == 0ULL &&
+     	aurora->bitboards[WQ] == 0ULL &&
+     	aurora->bitboards[WK] == 0x2000ULL &&
+     	aurora->bitboards[BP] == 0x1020000000000ULL &&
+     	aurora->bitboards[BN] == 0ULL &&
+     	aurora->bitboards[BB] == 0ULL &&
+     	aurora->bitboards[BR] == 0x100000000000000ULL &&
+     	aurora->bitboards[BQ] == 0x80ULL &&
+     	aurora->bitboards[BK] == 0x800000000000ULL &&
+     	aurora->bitboards[WHITE] == 0x12600ULL &&
+     	aurora->bitboards[BLACK] == 0x101820000000080ULL && 
+     	aurora->bitboards[ALL] == 0x101820000012680ULL 
      ) return 1;
   return 0;
 }

@@ -10,13 +10,13 @@ int aurora_get_moves(Aurora *aurora, Move moves[100]) {
   aurora_analyse(aurora);
 
   if (aurora->turn) {
-    uint64_t not_white_pieces = ~(aurora->all_white_pieces | aurora->black_king);
-    uint64_t black_pieces = aurora->all_black_pieces ^ aurora->black_king;
+    uint64_t not_white_pieces = ~(aurora->bitboards[WHITE] | aurora->bitboards[BK]);
+    uint64_t black_pieces = aurora->bitboards[BLACK] ^ aurora->bitboards[BK];
 
     nb_moves = aurora_get_white_moves(aurora, moves, not_white_pieces, black_pieces);
   } else {
-    uint64_t not_black_pieces = ~(aurora->all_black_pieces | aurora->white_king);
-    uint64_t white_pieces = aurora->all_white_pieces ^ aurora->white_king;
+    uint64_t not_black_pieces = ~(aurora->bitboards[BLACK] | aurora->bitboards[WK]);
+    uint64_t white_pieces = aurora->bitboards[WHITE] ^ aurora->bitboards[WK];
 
     nb_moves = aurora_get_black_moves(aurora, moves, not_black_pieces, white_pieces);
   }
@@ -29,15 +29,15 @@ int aurora_get_white_moves(Aurora *aurora, Move moves[100], uint64_t not_white_p
 
   get_white_castling_moves(aurora, moves, &nb_moves);
  
-  get_queens_moves(moves, &nb_moves, &aurora->white_queens, not_white_pieces, black_pieces, aurora->all_pieces);
+  get_queens_moves(aurora, moves, &nb_moves, WQ, not_white_pieces, black_pieces, aurora->bitboards[ALL]);
 
-  get_rooks_moves(moves, &nb_moves, &aurora->white_rooks, not_white_pieces, black_pieces, aurora->all_pieces);
+  get_rooks_moves(aurora, moves, &nb_moves, WR, not_white_pieces, black_pieces, aurora->bitboards[ALL]);
 
-  get_bishops_moves(moves, &nb_moves, &aurora->white_bishops, not_white_pieces, black_pieces, aurora->all_pieces);
+  get_bishops_moves(aurora, moves, &nb_moves, WB, not_white_pieces, black_pieces, aurora->bitboards[ALL]);
 
-  get_king_moves(moves, &nb_moves, &aurora->white_king, not_white_pieces, black_pieces);
+  get_king_moves(aurora, moves, &nb_moves, WK, not_white_pieces, black_pieces);
 
-  get_knights_moves(moves, &nb_moves, &aurora->white_knights, not_white_pieces, black_pieces); 
+  get_knights_moves(aurora, moves, &nb_moves, WN, not_white_pieces, black_pieces); 
 
   get_white_pawns_moves(aurora, moves, &nb_moves, black_pieces);
 
@@ -50,24 +50,24 @@ int aurora_get_black_moves(Aurora *aurora, Move moves[100],
 
   get_black_castling_moves(aurora, moves, &nb_moves);
 
-  get_queens_moves(moves, &nb_moves, &aurora->black_queens, not_black_pieces, white_pieces, aurora->all_pieces);
+  get_queens_moves(aurora, moves, &nb_moves, BQ, not_black_pieces, white_pieces, aurora->bitboards[ALL]);
 
-  get_rooks_moves(moves, &nb_moves, &aurora->black_rooks, not_black_pieces, white_pieces, aurora->all_pieces);
+  get_rooks_moves(aurora, moves, &nb_moves, BR, not_black_pieces, white_pieces, aurora->bitboards[ALL]);
 
-  get_bishops_moves(moves, &nb_moves, &aurora->black_bishops, not_black_pieces, white_pieces, aurora->all_pieces);
+  get_bishops_moves(aurora, moves, &nb_moves, BB, not_black_pieces, white_pieces, aurora->bitboards[ALL]);
 
-  get_king_moves(moves, &nb_moves, &aurora->black_king, not_black_pieces, white_pieces);
+  get_king_moves(aurora, moves, &nb_moves, BK, not_black_pieces, white_pieces);
 
-  get_knights_moves(moves, &nb_moves, &aurora->black_knights, not_black_pieces, white_pieces); 
+  get_knights_moves(aurora, moves, &nb_moves, BN, not_black_pieces, white_pieces); 
 
   get_black_pawns_moves(aurora, moves, &nb_moves, white_pieces);
 
   return nb_moves;
 }
 
-void get_queens_moves(Move moves[100], int *nb_moves, uint64_t *this_side_queens, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
+void get_queens_moves(Aurora *aurora, Move moves[100], int *nb_moves, Piece this_side_queens, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
   ////////////////////////////////////////////////////////// QUEENS MOVES
-  uint64_t queens = *this_side_queens;
+  uint64_t queens = aurora->bitboards[this_side_queens];
   uint64_t piece = queens & ~(queens - 1);
 
   while (piece) {
@@ -107,9 +107,9 @@ void get_queens_moves(Move moves[100], int *nb_moves, uint64_t *this_side_queens
   }
 }
 
-void get_rooks_moves(Move moves[100], int *nb_moves, uint64_t *this_side_rooks, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
+void get_rooks_moves(Aurora *aurora, Move moves[100], int *nb_moves, Piece this_side_rooks, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
   ////////////////////////////////////////////////////////// ROOKS MOVES
-  uint64_t rooks = *this_side_rooks;
+  uint64_t rooks = aurora->bitboards[this_side_rooks];
   uint64_t piece = rooks & ~(rooks - 1);
 
   while (piece) {
@@ -145,9 +145,9 @@ void get_rooks_moves(Move moves[100], int *nb_moves, uint64_t *this_side_rooks, 
   }
 }
 
-void get_bishops_moves(Move moves[100], int *nb_moves, uint64_t *this_side_bishops, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
+void get_bishops_moves(Aurora *aurora, Move moves[100], int *nb_moves, Piece this_side_bishops, uint64_t not_my_pieces, uint64_t opp_pieces, uint64_t occupied) {
   ////////////////////////////////////////////////////////// WHITE BISHOPS MOVES
-  uint64_t bishops = *this_side_bishops;
+  uint64_t bishops = aurora->bitboards[this_side_bishops];
   uint64_t piece = bishops & ~(bishops - 1);
 
   while (piece) {
@@ -183,9 +183,9 @@ void get_bishops_moves(Move moves[100], int *nb_moves, uint64_t *this_side_bisho
   }
 }
 
-void get_knights_moves(Move moves[100], int *nb_moves, uint64_t *this_side_knights, uint64_t not_my_pieces, uint64_t opp_pieces) {
+void get_knights_moves(Aurora *aurora, Move moves[100], int *nb_moves, Piece this_side_knights, uint64_t not_my_pieces, uint64_t opp_pieces) {
   ///////////////////////////////////////////////////////// WHITE KNIGHTS MOVES
-  uint64_t knights = *this_side_knights;
+  uint64_t knights = aurora->bitboards[this_side_knights];
   uint64_t piece = knights & ~(knights - 1);
   uint64_t knights_moves;
 
@@ -229,9 +229,9 @@ void get_knights_moves(Move moves[100], int *nb_moves, uint64_t *this_side_knigh
   }
 }
 
-void get_king_moves(Move moves[100], int *nb_moves, uint64_t *this_side_king, uint64_t not_my_pieces, uint64_t opp_pieces) {
+void get_king_moves(Aurora *aurora, Move moves[100], int *nb_moves, Piece this_side_king, uint64_t not_my_pieces, uint64_t opp_pieces) {
   ////////////////////////////////////////////////////////// KING MOVES
-  uint64_t piece = *this_side_king;
+  uint64_t piece = aurora->bitboards[this_side_king];
   int i = __builtin_ctzll(piece);
   uint64_t king_moves;
 
@@ -263,35 +263,35 @@ void get_king_moves(Move moves[100], int *nb_moves, uint64_t *this_side_king, ui
 void get_white_castling_moves(Aurora *aurora, Move moves[100], int *nb_moves) {
   ////////////////////////////////////////////////////////// WHITE CASTLING
   // KING SIDE CASTLE
-  if (aurora->castling_right[0] && 0x20ULL & aurora->empty && 0x40ULL & aurora->empty) {
+  if (aurora->castling_right[0] && 0x20ULL & aurora->bitboards[EMPTY] && 0x40ULL & aurora->bitboards[EMPTY]) {
     moves[(*nb_moves)++] =
-        (Move){&aurora->white_king, 0x50ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0xA0ULL, &aurora->white_rooks};
+        (Move){WK, 0x50ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0xA0ULL, WR};
   }
 
   // QUEEN SIDE CASTLE
-  if (aurora->castling_right[1] && 0x2ULL & aurora->empty && 0x4ULL & aurora->empty &&
-      0x8ULL & aurora->empty) {
+  if (aurora->castling_right[1] && 0x2ULL & aurora->bitboards[EMPTY] && 0x4ULL & aurora->bitboards[EMPTY] &&
+      0x8ULL & aurora->bitboards[EMPTY]) {
     moves[(*nb_moves)++] =
-        (Move){&aurora->white_king, 0x14ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0x9ULL, &aurora->white_rooks};
+        (Move){WK, 0x14ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0x9ULL, WR};
   }
 }
 
 void get_black_castling_moves(Aurora *aurora, Move moves[100], int *nb_moves) {
   ////////////////////////////////////////////////////////// BLACK CASTLING
   // KING SIDE CASTLE
-  if (aurora->castling_right[2] && 0x2000000000000000ULL & aurora->empty &&
-      0x4000000000000000ULL & aurora->empty) {
+  if (aurora->castling_right[2] && 0x2000000000000000ULL & aurora->bitboards[EMPTY] &&
+      0x4000000000000000ULL & aurora->bitboards[EMPTY]) {
     moves[(*nb_moves)++] = (Move){
-        &aurora->black_king,   0x5000000000000000ULL, 0ULL, 0ULL, 0ULL, 0ULL,
-        0xA000000000000000ULL, &aurora->black_rooks};
+        BK,   0x5000000000000000ULL, 0ULL, 0ULL, 0ULL, 0ULL,
+        0xA000000000000000ULL, BR};
   }
 
   // QUEEN SIDE CASTLE
-  if (aurora->castling_right[3] && 0x200000000000000ULL & aurora->empty &&
-      0x400000000000000ULL & aurora->empty && 0x800000000000000ULL & aurora->empty) {
+  if (aurora->castling_right[3] && 0x200000000000000ULL & aurora->bitboards[EMPTY] &&
+      0x400000000000000ULL & aurora->bitboards[EMPTY] && 0x800000000000000ULL & aurora->bitboards[EMPTY]) {
     moves[(*nb_moves)++] = (Move){
-        &aurora->black_king,  0x1400000000000000ULL, 0ULL, 0ULL, 0ULL, 0ULL,
-        0x900000000000000ULL, &aurora->black_rooks};
+        BK,  0x1400000000000000ULL, 0ULL, 0ULL, 0ULL, 0ULL,
+        0x900000000000000ULL, BR};
   }
 }
 
@@ -299,12 +299,12 @@ void get_black_castling_moves(Aurora *aurora, Move moves[100], int *nb_moves) {
 void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint64_t black_pieces) {
   /////////////////////////////////////////////////////////// WHITE PAWNS MOVES
   // PAWN MOVE FORWARD 1
-  uint64_t forward_moves = (aurora->white_pawns << 8) & aurora->empty & ~RANK_8;
+  uint64_t forward_moves = (aurora->bitboards[WP] << 8) & aurora->bitboards[EMPTY] & ~RANK_8;
   uint64_t piece = forward_moves & ~(forward_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 8),
                                0ULL,
                                0ULL,
@@ -320,12 +320,12 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PAWN MOVE FORWARD 2
   uint64_t double_forward_moves =
-      (aurora->white_pawns << 16) & RANK_4 & aurora->empty & (aurora->empty << 8);
+      (aurora->bitboards[WP] << 16) & RANK_4 & aurora->bitboards[EMPTY] & (aurora->bitboards[EMPTY] << 8);
   piece = double_forward_moves & ~(double_forward_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 16),
                                0ULL,
                                0ULL,
@@ -341,12 +341,12 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // CAPTURE RIGHT
   uint64_t capture_right_moves =
-      (aurora->white_pawns << 9) & black_pieces & ~FILE_A & ~RANK_8;
+      (aurora->bitboards[WP] << 9) & black_pieces & ~FILE_A & ~RANK_8;
   piece = capture_right_moves & ~(capture_right_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 9),
                                piece,
                                0ULL,
@@ -362,12 +362,12 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // CAPTURE LEFT
   uint64_t capture_left_moves =
-      (aurora->white_pawns << 7) & black_pieces & ~FILE_H & ~RANK_8;
+      (aurora->bitboards[WP] << 7) & black_pieces & ~FILE_H & ~RANK_8;
   piece = capture_left_moves & ~(capture_left_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 7),
                                piece,
                                0ULL,
@@ -383,16 +383,16 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // EN PASSANT CAPTURE RIGHT
   uint64_t en_passant_capture_right =
-      (aurora->white_pawns << 1) & aurora->black_pawns & RANK_5 & ~FILE_A;
+      (aurora->bitboards[WP] << 1) & aurora->bitboards[BP] & RANK_5 & ~FILE_A;
   piece = en_passant_capture_right & ~(en_passant_capture_right - 1);
 
   while (piece) {
     // CHECK IF CAN EN PASSANT
     if ((piece << 8) & aurora->en_passant) {
-      moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+      moves[(*nb_moves)++] = (Move){WP,
                                  (piece >> 1) | aurora->en_passant,
                                  piece,
-                                 &aurora->black_pawns,
+                                 BP,
                                  0ULL,
                                  0ULL,
                                  0ULL,
@@ -406,16 +406,16 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // EN PASSANT CAPTURE LEFT
   uint64_t en_passant_capture_left =
-      (aurora->white_pawns >> 1) & aurora->black_pawns & RANK_5 & ~FILE_H;
+      (aurora->bitboards[WP] >> 1) & aurora->bitboards[BP] & RANK_5 & ~FILE_H;
   piece = en_passant_capture_left & ~(en_passant_capture_left - 1);
 
   while (piece) {
     // CHECK IF CAN EN PASSANT
     if ((piece << 8) & aurora->en_passant) {
-      moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+      moves[(*nb_moves)++] = (Move){WP,
                                  (piece << 1) | aurora->en_passant,
                                  piece,
-                                 &aurora->black_pawns,
+                                 BP,
                                  0ULL,
                                  0ULL,
                                  0ULL,
@@ -428,41 +428,41 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
   }
 
   // PROMOTION FORWARD
-  uint64_t promotion_forward = (aurora->white_pawns << 8) & RANK_8 & aurora->empty;
+  uint64_t promotion_forward = (aurora->bitboards[WP] << 8) & RANK_8 & aurora->bitboards[EMPTY];
   piece = promotion_forward & ~(promotion_forward - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->white_knights,
+                               WN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->white_bishops,
+                               WB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->white_rooks,
+                               WR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->white_queens,
+                               WQ,
                                0ULL,
                                0ULL};
 
@@ -472,41 +472,41 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PROMOTION CAPTURE RIGHT
   uint64_t promotion_capture_right =
-      (aurora->white_pawns << 9) & black_pieces & RANK_8 & ~FILE_A;
+      (aurora->bitboards[WP] << 9) & black_pieces & RANK_8 & ~FILE_A;
   piece = promotion_capture_right & ~(promotion_capture_right - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 9),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_knights,
+                               WN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 9),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_bishops,
+                               WB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 9),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_rooks,
+                               WR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 9),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_queens,
+                               WQ,
                                0ULL,
                                0ULL};
 
@@ -516,41 +516,41 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PROMOTION CAPTURE LEFT
   uint64_t promotion_capture_left =
-      (aurora->white_pawns << 7) & black_pieces & RANK_8 & ~FILE_H;
+      (aurora->bitboards[WP] << 7) & black_pieces & RANK_8 & ~FILE_H;
   piece = promotion_capture_left & ~(promotion_capture_left - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 7),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_knights,
+                               WN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 7),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_bishops,
+                               WB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 7),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_rooks,
+                               WR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->white_pawns,
+    moves[(*nb_moves)++] = (Move){WP,
                                piece | (piece >> 7),
                                piece,
                                0ULL,
                                piece,
-                               &aurora->white_queens,
+                               WQ,
                                0ULL,
                                0ULL};
 
@@ -562,12 +562,12 @@ void get_white_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint64_t white_pieces) {
   //////////////////////////////////////////////////////////// BLACK PAWNS MOVES
   // PAWN MOVE FORWARD 1
-  uint64_t forward_moves = (aurora->black_pawns >> 8) & aurora->empty & ~RANK_1;
+  uint64_t forward_moves = (aurora->bitboards[BP] >> 8) & aurora->bitboards[EMPTY] & ~RANK_1;
   uint64_t piece = forward_moves & ~(forward_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 8),
                                0ULL,
                                0ULL,
@@ -583,12 +583,12 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PAWN MOVE FORWARD 2
   uint64_t double_forward_moves =
-      (aurora->black_pawns >> 16) & RANK_5 & aurora->empty & (aurora->empty >> 8);
+      (aurora->bitboards[BP] >> 16) & RANK_5 & aurora->bitboards[EMPTY] & (aurora->bitboards[EMPTY] >> 8);
   piece = double_forward_moves & ~(double_forward_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 16),
                                0ULL,
                                0ULL,
@@ -604,12 +604,12 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // CAPTURE RIGHT
   uint64_t capture_right_moves =
-      (aurora->black_pawns >> 9) & white_pieces & ~FILE_H & ~RANK_1;
+      (aurora->bitboards[BP] >> 9) & white_pieces & ~FILE_H & ~RANK_1;
   piece = capture_right_moves & ~(capture_right_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 9),
                                piece,
                                0ULL,
@@ -625,12 +625,12 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // CAPTURE LEFT
   uint64_t capture_left_moves =
-      (aurora->black_pawns >> 7) & white_pieces & ~FILE_A & ~RANK_1;
+      (aurora->bitboards[BP] >> 7) & white_pieces & ~FILE_A & ~RANK_1;
   piece = capture_left_moves & ~(capture_left_moves - 1);
 
   while (piece) {
     // ADD PAWN MOVE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 7),
                                piece,
                                0ULL,
@@ -646,16 +646,16 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // EN PASSANT CAPTURE RIGHT
   uint64_t en_passant_capture_right =
-      (aurora->black_pawns >> 1) & aurora->white_pawns & RANK_4 & ~FILE_H;
+      (aurora->bitboards[BP] >> 1) & aurora->bitboards[WP] & RANK_4 & ~FILE_H;
   piece = en_passant_capture_right & ~(en_passant_capture_right - 1);
 
   while (piece) {
     // CHECK IF CAN EN PASSANT
     if ((piece >> 8) & aurora->en_passant) {
-      moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+      moves[(*nb_moves)++] = (Move){BP,
                                  (piece << 1) | aurora->en_passant,
                                  piece,
-                                 &aurora->white_pawns,
+                                 WP,
                                  0ULL,
                                  0ULL,
                                  0ULL,
@@ -669,16 +669,16 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // EN PASSANT CAPTURE LEFT
   uint64_t en_passant_capture_left =
-      (aurora->black_pawns << 1) & aurora->white_pawns & RANK_4 & ~FILE_A;
+      (aurora->bitboards[BP] << 1) & aurora->bitboards[WP] & RANK_4 & ~FILE_A;
   piece = en_passant_capture_left & ~(en_passant_capture_left - 1);
 
   while (piece) {
     // CHECK IF CAN EN PASSANT
     if ((piece >> 8) & aurora->en_passant) {
-      moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+      moves[(*nb_moves)++] = (Move){BP,
                                  (piece >> 1) | aurora->en_passant,
                                  piece,
-                                 &aurora->white_pawns,
+                                 WP,
                                  0ULL,
                                  0ULL,
                                  0ULL,
@@ -691,41 +691,41 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
   }
 
   // PROMOTION FORWARD
-  uint64_t promotion_forward = (aurora->black_pawns >> 8) & RANK_1 & aurora->empty;
+  uint64_t promotion_forward = (aurora->bitboards[BP] >> 8) & RANK_1 & aurora->bitboards[EMPTY];
   piece = promotion_forward & ~(promotion_forward - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_knights,
+                               BN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_bishops,
+                               BB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_rooks,
+                               BR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 8),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_queens,
+                               BQ,
                                0ULL,
                                0ULL};
 
@@ -735,41 +735,41 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PROMOTION CAPTURE RIGHT
   uint64_t promotion_capture_right =
-      (aurora->black_pawns >> 9) & white_pieces & RANK_1 & ~FILE_H;
+      (aurora->bitboards[BP] >> 9) & white_pieces & RANK_1 & ~FILE_H;
   piece = promotion_capture_right & ~(promotion_capture_right - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 9),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_knights,
+                               BN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 9),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_bishops,
+                               BB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 9),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_rooks,
+                               BR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 9),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_queens,
+                               BQ,
                                0ULL,
                                0ULL};
 
@@ -779,41 +779,41 @@ void get_black_pawns_moves(Aurora *aurora, Move moves[100], int *nb_moves, uint6
 
   // PROMOTION CAPTURE LEFT
   uint64_t promotion_capture_left =
-      (aurora->black_pawns >> 7) & white_pieces & RANK_1 & ~FILE_A;
+      (aurora->bitboards[BP] >> 7) & white_pieces & RANK_1 & ~FILE_A;
   piece = promotion_capture_left & ~(promotion_capture_left - 1);
 
   while (piece) {
     // MOVE FOR ALL PROMOTION TYPE
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 7),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_knights,
+                               BN,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 7),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_bishops,
+                               BB,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 7),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_rooks,
+                               BR,
                                0ULL,
                                0ULL};
-    moves[(*nb_moves)++] = (Move){&aurora->black_pawns,
+    moves[(*nb_moves)++] = (Move){BP,
                                piece | (piece << 7),
                                0ULL,
                                0ULL,
                                piece,
-                               &aurora->black_queens,
+                               BQ,
                                0ULL,
                                0ULL};
 

@@ -8,6 +8,8 @@
 
 -* peut etre tout changer struct Move en faisant des move par square et contenir les bitboards dans un array comme ca pas besoin de donner une adresse mais juste un indice et faire un enum pour les indices des bitboards dans l'array
 - faire un enum pour les 64 cases (voir CPW square notation)
+- supp Aurora
+- changer struct move pour avoir un from et to car moins de choses a garder (voir CPW bitboards make move)
 
 -test:
 	- perft des coups sur les positions donne par CPW

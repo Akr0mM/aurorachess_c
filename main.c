@@ -13,9 +13,6 @@ int main(void) {
   Move all_moves[100];
   int nb_moves = aurora_get_moves(&aurora, all_moves);
   draw_all_moves(all_moves, nb_moves);
-  aurora_make_move(&aurora, get_move_from_sq(all_moves, "f7f5"));
-  // aurora_get_moves(&aurora, all_moves);
-  // draw_board_bitboard(aurora.all_black_pieces);
 
   return 0;
 }

@@ -2,16 +2,37 @@
 
 #include <stdint.h>
 
+// BITBOARDS ENUM
+typedef enum {
+  NONE,
+  WP,
+  WN,
+  WB,
+  WR,
+  WQ,
+  WK,
+  BP,
+  BN,
+  BB,
+  BR,
+  BQ,
+  BK,
+  WHITE,
+  BLACK,
+  ALL,
+  EMPTY
+} Piece;
+
 // MOVE STRUCT
 typedef struct Move {
-  uint64_t *piece;
+  Piece piece;
   uint64_t move;
   uint64_t capture;
-  uint64_t *en_passant_piece_captured;
+  Piece en_passant_piece_captured;
   uint64_t promotion;
-  uint64_t *promotion_piece;
+  Piece promotion_piece;
   uint64_t castle;
-  uint64_t *rook;
+  Piece rook;
 } Move;
 
 // ENGINE STRUCT
@@ -20,26 +41,9 @@ typedef struct Aurora {
   int castling_right[4];
   uint64_t en_passant;
 
-  uint64_t all_pieces;
-  uint64_t empty;
-  uint64_t all_white_pieces;
-  uint64_t all_black_pieces;
+  uint64_t bitboards[17];
 
-  uint64_t white_pawns;
-  uint64_t white_knights;
-  uint64_t white_bishops;
-  uint64_t white_rooks;
-  uint64_t white_queens;
-  uint64_t white_king;
-
-  uint64_t black_pawns;
-  uint64_t black_knights;
-  uint64_t black_bishops;
-  uint64_t black_rooks;
-  uint64_t black_queens;
-  uint64_t black_king;
-
-  uint64_t *board_bitboard[64];
+  Piece board_bitboard[64];
 } Aurora;
 
 //// CONSTANT VARIABLE
